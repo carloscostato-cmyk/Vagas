@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1, "company": "Santander Brasil", "role": "Strategic AI Transformation Manager", "date": "22/04/2026", "status": "Applied", "method": "API / Back-end", "log": "CV enviado via protocolo seguro."
+    },
+    {
+        "id": 2, "company": "Deloitte Brasil", "role": "Cyber Senior Manager", "date": "22/04/2026", "status": "Applied", "method": "API / Back-end", "log": "Candidatura confirmada via ATS."
+    },
+    {
+        "id": 3, "company": "XP Inc", "role": "Analista Sênior de Transformação Digital", "date": "22/04/2026", "status": "Applied", "method": "Back-end Request", "log": "Foco em ROI e Inovação Digital."
+    },
+    {
+        "id": 4, "company": "Itaú Unibanco", "role": "Especialista em Estratégia Digital & IA", "date": "22/04/2026", "status": "Applied", "method": "Back-end Request", "log": "Perfil sênior com IA FIAP em destaque."
+    },
+    {
+        "id": 5, "company": "Magalu", "role": "Analista de Inovação e Transformação Sr", "date": "22/04/2026", "status": "Applied", "method": "Back-end Request", "log": "Foco em escala e automação inteligente."
+    },
+    {
+        "id": 6, "company": "Vivo (Telefônica)", "role": "Gerente de Projetos de Transformação Digital", "date": "22/04/2026", "status": "Applied", "method": "Back-end Request", "log": "Experiência Enterprise HITSS/Global comprovada."
+    },
+    {
+        "id": 7, "company": "Nubank", "role": "Digital Transformation Lead", "date": "22/04/2026", "status": "Applied", "method": "Back-end Request", "log": "Match técnico em Governança e IA."
+    }
+]

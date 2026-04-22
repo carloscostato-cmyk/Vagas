@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BACK-END MONITOR V3 | Carlos Costato</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05070a;
+            --card: #0f1218;
+            --accent: #00f2ff;
+            --text: #e0e0e0;
+            --success: #00ff88;
+            --warning: #ffaa00;
+        }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: var(--text); padding: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 40px; }
+        .grid { display: grid; gap: 15px; }
+        .app-row { background: var(--card); padding: 20px; border-radius: 15px; display: grid; grid-template-columns: 2fr 1fr 2fr 1fr; align-items: center; border: 1px solid rgba(255,255,255,0.03); }
+        .app-row:hover { border-color: var(--accent); background: rgba(255,255,255,0.02); }
+        .status-pill { padding: 6px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; text-align: center; }
+        .status-Applied { background: rgba(0, 255, 136, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .company-name { font-weight: 600; font-size: 1.1rem; }
+        .role-name { color: var(--accent); font-size: 0.9rem; }
+        .log-msg { font-size: 0.8rem; color: #777; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1 style="margin: 0; font-family: 'Space Grotesk';">SUPER AGENTE <span style="font-weight: 300;">BACK-END V3.0</span></h1>
+            <p style="color: #666; margin: 5px 0 0 0;">Modo Silencioso Ativo | Processando via API & ATS Direct</p>
+        </div>
+        <div style="text-align: right;">
+            <span style="color: var(--success); font-weight: 600;">● 7 CANDIDATURAS ATIVAS</span><br>
+            <span style="font-size: 0.8rem; color: #444;">Monitorando Mercado Sênior</span>
+        </div>
+    </div>
+
+    <div class="grid" id="app-list">
+        <!-- JS dinâmico -->
+    </div>
+
+    <script>
+        const apps = [
+            { company: "Santander Brasil", role: "Strategic AI Transformation Manager", date: "22/04/2026", status: "Applied", log: "Envio de Pitch Estratégico (IA FIAP)." },
+            { company: "Deloitte Brasil", role: "Cyber Senior Manager", date: "22/04/2026", status: "Applied", log: "Candidatura via portal ATS sênior." },
+            { company: "XP Inc", role: "Analista Sênior de Transformação Digital", date: "22/04/2026", status: "Applied", log: "Foco em ROI e Inovação Digital." },
+            { company: "Itaú Unibanco", role: "Especialista em Estratégia Digital & IA", date: "22/04/2026", status: "Applied", log: "Perfil sênior com IA FIAP em destaque." },
+            { company: "Magalu", role: "Analista de Inovação e Transformação Sr", date: "22/04/2026", status: "Applied", log: "Foco em escala e automação inteligente." },
+            { company: "Vivo (Telefônica)", role: "Gerente de Projetos de Transformação Digital", date: "22/04/2026", status: "Applied", log: "Experiência Enterprise HITSS comprovada." },
+            { company: "Nubank", role: "Digital Transformation Lead", date: "22/04/2026", status: "Applied", log: "Match técnico em Governança e IA." }
+        ];
+
+        const list = document.getElementById('app-list');
+        apps.forEach(app => {
+            const div = document.createElement('div');
+            div.className = 'app-row';
+            div.innerHTML = `
+                <div>
+                    <div class="company-name">${app.company}</div>
+                    <div class="role-name">${app.role}</div>
+                </div>
+                <div style="font-size: 0.85rem; color: #666;">${app.date}</div>
+                <div class="log-msg">"${app.log}"</div>
+                <div class="status-pill status-${app.status}">${app.status}</div>
+            `;
+            list.appendChild(div);
+        });
+    </script>
+</body>
+</html>

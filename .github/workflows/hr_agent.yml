@@ -1,65 +1,55 @@
-name: 🤖 Agente de RH — Caçador de Vagas
+name: RH Agent - Cacador de Vagas
 
 on:
   schedule:
-    # -----------------------------------------------------------------------
-    # Horários em UTC — GitHub Actions usa UTC
-    # BRT = UTC-3  |  BRST (verão) = UTC-2
-    # -----------------------------------------------------------------------
-    - cron: '0 12 * * *'   # 09:00 BRT  (UTC-3)
-    - cron: '0 15 * * *'   # 12:00 BRT  (UTC-3)
-    - cron: '0 16 * * *'   # 13:00 BRT  (UTC-3)
-    - cron: '0 21 * * *'   # 18:00 BRT  (UTC-3)
-  workflow_dispatch:        # Permite disparo manual pelo GitHub UI
+    - cron: '0 12 * * *'  # 09:00 BRT
+    - cron: '0 15 * * *'  # 12:00 BRT
+    - cron: '0 16 * * *'  # 13:00 BRT
+    - cron: '0 21 * * *'  # 18:00 BRT
+  workflow_dispatch:
 
 jobs:
   hunt_and_notify:
-    name: Caçar Vagas e Notificar Telegram
+    name: Cacar vagas e notificar Telegram
     runs-on: ubuntu-latest
 
     steps:
-      # ─── 1. Baixar o repositório ────────────────────────────────────────
-      - name: 📥 Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ─── 2. Configurar Python ───────────────────────────────────────────
-      - name: 🐍 Set up Python 3.11
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ─── 3. Instalar dependências ───────────────────────────────────────
-      - name: 📦 Install Dependencies
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install requests beautifulsoup4
 
-      # ─── 4. Executar o Agente de RH ─────────────────────────────────────
-      - name: 🔍 Run RH Agent (search + score + notify)
+      - name: Run RH agent
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Determina o label do ciclo baseado na hora UTC
           HOUR=$(date -u +%H)
-          if [ "$HOUR" = "12" ]; then LABEL="Ciclo Manhã (09h)";
+          if [ "$HOUR" = "12" ]; then LABEL="Ciclo Manha (09h)";
           elif [ "$HOUR" = "15" ]; then LABEL="Ciclo Meio-dia (12h)";
           elif [ "$HOUR" = "16" ]; then LABEL="Ciclo Tarde (13h)";
           else LABEL="Ciclo Noite (18h)"; fi
 
-          echo "🚀 Iniciando: $LABEL"
+          echo "Iniciando: $LABEL"
           python rh_specialist.py "$LABEL"
 
-          # ─── 5. Validar política de idioma e links ───────────────────────────
-          - name: ✅ Validate job quality policy
-          run: |
-            python - <<'PY'
-            import json
-            import sys
-            from urllib.parse import urlparse
+      - name: Validate job quality policy
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+          from urllib.parse import urlparse
 
-            blocked_patterns = [
+          blocked_patterns = [
               "fluent english required",
               "advanced english required",
               "business fluent english",
@@ -73,57 +63,61 @@ jobs:
               "english proficiency c2",
               "bilingual mandatory",
               "must be fluent in english",
-              "inglês fluente obrigatório",
               "ingles fluente obrigatorio",
-              "inglês avançado obrigatório",
               "ingles avancado obrigatorio",
-              "inglês obrigatório",
               "ingles obrigatorio",
-            ]
+              "ingles e obrigatorio",
+          ]
 
-            def valid_url(url: str) -> bool:
+          def valid_url(url: str) -> bool:
               if not url:
-                return False
+                  return False
               parsed = urlparse(url)
               return parsed.scheme in ("http", "https") and bool(parsed.netloc)
 
-            with open("applications.json", "r", encoding="utf-8") as f:
+          with open("applications.json", "r", encoding="utf-8") as f:
               jobs = json.load(f)
 
-            bad_lang = []
-            bad_url = []
-            for job in jobs:
+          with open("run_summary.json", "r", encoding="utf-8") as f:
+              summary = json.load(f)
+
+          bad_lang = []
+          bad_url = []
+          for job in jobs:
               text = " ".join([
-                str(job.get("title", "")),
-                str(job.get("description", "")),
-                str(job.get("requirements", "")),
+                  str(job.get("title", "")),
+                  str(job.get("description", "")),
+                  str(job.get("requirements", "")),
               ]).lower()
 
               if any(p in text for p in blocked_patterns):
-                bad_lang.append(job.get("title", "(sem título)"))
+                  bad_lang.append(job.get("title", "(sem titulo)"))
 
               if not valid_url(str(job.get("url", ""))):
-                bad_url.append(job.get("title", "(sem título)"))
+                  bad_url.append(job.get("title", "(sem titulo)"))
 
-            if bad_lang or bad_url:
-              if bad_lang:
-                print("ERRO: Vagas com inglês obrigatório/fluente detectadas:")
-                for title in bad_lang[:10]:
-                  print(f" - {title}")
-              if bad_url:
-                print("ERRO: Vagas com URL inválida detectadas:")
-                for title in bad_url[:10]:
-                  print(f" - {title}")
+          if "sources" not in summary:
+              print("ERRO: run_summary.json sem campo sources")
               sys.exit(1)
 
-            print(f"OK: {len(jobs)} vagas validadas sem violar política de idioma e links.")
-            PY
+          if bad_lang or bad_url:
+              if bad_lang:
+                  print("ERRO: Vagas com ingles obrigatorio detectadas:")
+                  for title in bad_lang[:10]:
+                      print(f" - {title}")
+              if bad_url:
+                  print("ERRO: Vagas com URL invalida detectadas:")
+                  for title in bad_url[:10]:
+                      print(f" - {title}")
+              sys.exit(1)
 
-          # ─── 6. Salvar vagas encontradas no repositório ──────────────────────
-      - name: 💾 Commit & Push applications.json
+          print(f"OK: {len(jobs)} vagas e run_summary.json validados.")
+          PY
+
+      - name: Commit and push data files
         run: |
-          git config --global user.name  'RH-Agent-Bot 🤖'
+          git config --global user.name 'RH-Agent-Bot'
           git config --global user.email 'rh-agent@carloscostato.com'
-          git add applications.json
-          git diff --staged --quiet || git commit -m "bot: 🤖 vagas atualizadas pelo agente [skip ci]"
+          git add applications.json run_summary.json
+          git diff --staged --quiet || git commit -m "bot: atualiza vagas e resumo do ciclo [skip ci]"
           git push

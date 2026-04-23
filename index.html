@@ -135,6 +135,24 @@
     .search-input { min-width: 230px; }
     .search-input:focus, .search-select:focus { border-color: var(--border-glow); box-shadow: 0 0 0 2px rgba(0,242,255,.12); }
 
+    .source-monitor {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .source-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: .78rem;
+      color: var(--text-dim);
+    }
+    .source-chip strong { color: var(--text); font-size: .82rem; }
+    .source-chip.ok { border-color: rgba(61,220,132,.35); }
+    .source-chip.empty { border-color: rgba(251,191,36,.35); }
+
     /* ── Job cards ─────────────────────────────────────────────────── */
     .job-list { display: flex; flex-direction: column; gap: 12px; }
 
@@ -296,6 +314,8 @@
     </div>
 
     <!-- Job list -->
+    <div id="source-monitor" class="source-monitor"></div>
+
     <div class="section-header">
       <h2>📋 Vagas Detectadas</h2>
       <div class="section-tools">
@@ -331,6 +351,7 @@
     const REPO_NAME  = 'Vagas';
     const FILE_PATH  = 'applications.json';
     const JSON_URL   = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
+    const RUN_SUMMARY_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/run_summary.json`;
     // URL do dashboard ao vivo (igual ao Telegram)
     const DASHBOARD_URL = 'https://carloscostato-cmyk.github.io/Vagas/';
 
@@ -340,6 +361,7 @@
       arbeitnow: { label: 'Arbeitnow',  cls: 'badge-source-arbeitnow', icon: '🏢' },
       linkedin:  { label: 'LinkedIn',   cls: 'badge-source-manual',    icon: '💼' },
       freelance: { label: 'Freelance',  cls: 'badge-source-arbeitnow', icon: '🧑‍💻' },
+      brasiltech:{ label: 'BrasilTech', cls: 'badge-source-manual',    icon: '🇧🇷' },
       manual:    { label: 'Manual',     cls: 'badge-source-manual',    icon: '✍️'  },
     };
 
@@ -499,7 +521,9 @@
     function populateSourceFilter(jobs) {
       const select = document.getElementById('source-filter');
       const selected = select.value || 'all';
-      const sources = [...new Set(jobs.map(j => (j.source || 'manual').toLowerCase()))].sort();
+      const fromJobs = [...new Set(jobs.map(j => (j.source || 'manual').toLowerCase()))];
+      const monitored = Object.keys(SOURCE_META).filter(k => k !== 'manual');
+      const sources = [...new Set([...monitored, ...fromJobs])].sort();
 
       select.innerHTML = '<option value="all">Todas as fontes</option>';
       sources.forEach(src => {
@@ -513,6 +537,26 @@
       if ([...select.options].some(o => o.value === selected)) {
         select.value = selected;
       }
+    }
+
+    function renderSourceMonitor(summary) {
+      const monitor = document.getElementById('source-monitor');
+      if (!summary || !summary.sources) {
+        monitor.innerHTML = '';
+        return;
+      }
+
+      const entries = Object.entries(summary.sources);
+      monitor.innerHTML = entries.map(([key, info]) => {
+        const collected = info.collected || 0;
+        const accepted = info.accepted || 0;
+        const cls = accepted > 0 ? 'ok' : 'empty';
+        const label = info.label || SOURCE_META[key]?.label || key;
+        return `<div class="source-chip ${cls}">
+          <strong>${label}</strong><br>
+          Coletadas: ${collected} · Aceitas: ${accepted}
+        </div>`;
+      }).join('');
     }
 
     function applyFilters() {
@@ -553,9 +597,14 @@
       list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>Buscando dados ao vivo no GitHub...</p></div>`;
 
       try {
-        const res  = await fetch(`${JSON_URL}?t=${Date.now()}`);
+        const [res, summaryRes]  = await Promise.all([
+          fetch(`${JSON_URL}?t=${Date.now()}`),
+          fetch(`${RUN_SUMMARY_URL}?t=${Date.now()}`)
+        ]);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const jobs = await res.json();
+        const summary = summaryRes.ok ? await summaryRes.json() : null;
+        renderSourceMonitor(summary);
 
         if (!Array.isArray(jobs) || jobs.length === 0) {
           allJobs = [];

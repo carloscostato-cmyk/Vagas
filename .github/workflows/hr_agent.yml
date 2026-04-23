@@ -1,30 +1,61 @@
-name: HR Specialist Agent (Scheduled Reports)
+name: 🤖 Agente de RH — Caçador de Vagas
 
 on:
   schedule:
-    - cron: '0 12 * * *' # 09:00 BRT
-    - cron: '0 16 * * *' # 13:00 BRT
-    - cron: '0 21 * * *' # 18:00 BRT
-  workflow_dispatch:
+    # -----------------------------------------------------------------------
+    # Horários em UTC — GitHub Actions usa UTC
+    # BRT = UTC-3  |  BRST (verão) = UTC-2
+    # -----------------------------------------------------------------------
+    - cron: '0 12 * * *'   # 09:00 BRT  (UTC-3)
+    - cron: '0 15 * * *'   # 12:00 BRT  (UTC-3)
+    - cron: '0 16 * * *'   # 13:00 BRT  (UTC-3)
+    - cron: '0 21 * * *'   # 18:00 BRT  (UTC-3)
+  workflow_dispatch:        # Permite disparo manual pelo GitHub UI
 
 jobs:
-  report:
+  hunt_and_notify:
+    name: Caçar Vagas e Notificar Telegram
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      # ─── 1. Baixar o repositório ────────────────────────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      # ─── 2. Configurar Python ───────────────────────────────────────────
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run HR Agent & Send Report
-        env:
-          TELEGRAM_TOKEN: "7696538175:AAE-5hquTYBzos0ab8gfJxjpon4NXrXHaIw"
-          TELEGRAM_CHAT_ID: "5881090650"
+      # ─── 3. Instalar dependências ───────────────────────────────────────
+      - name: 📦 Install Dependencies
         run: |
-          python agente_de_RH/rh_specialist.py
+          pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      # ─── 4. Executar o Agente de RH ─────────────────────────────────────
+      - name: 🔍 Run RH Agent (search + score + notify)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          # Determina o label do ciclo baseado na hora UTC
+          HOUR=$(date -u +%H)
+          if [ "$HOUR" = "12" ]; then LABEL="Ciclo Manhã (09h)";
+          elif [ "$HOUR" = "16" ]; then LABEL="Ciclo Tarde (13h)";
+          else LABEL="Ciclo Noite (18h)"; fi
+
+          echo "🚀 Iniciando: $LABEL"
+          cd agente_de_RH
+          python rh_specialist.py "$LABEL"
+
+      # ─── 5. Salvar vagas encontradas no repositório ──────────────────────
+      - name: 💾 Commit & Push applications.json
+        run: |
+          git config --global user.name  'RH-Agent-Bot 🤖'
+          git config --global user.email 'rh-agent@carloscostato.com'
+          git add agente_de_RH/applications.json
+          git diff --staged --quiet || git commit -m "bot: 🤖 vagas atualizadas pelo agente [skip ci]"
+          git push

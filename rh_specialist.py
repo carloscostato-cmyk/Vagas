@@ -652,44 +652,62 @@ def fetch_linkedin_jobs() -> list:
     keywords = [
         "Senior IT Project Manager",
         "Gerente de Projetos",
+        "Gerente de TI",
         "Cybersecurity Manager",
+        "Information Security Manager",
         "Head of IT",
         "AI Project Manager",
+        "Digital Transformation Lead",
+        "Scrum Master Senior",
+        "Agile Coach",
+        "freelance project manager",
+        "contract project manager",
     ]
+    locations = ["Brasil", "Sao Paulo", "Remote", "Hibrido"]
+    seen = set()
 
     try:
         for kw in keywords:
-            url = (
-                "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
-                f"?keywords={quote_plus(kw)}&location={quote_plus('Brasil')}&start=0"
-            )
-            resp = requests.get(url, headers=REQUEST_HEADERS, timeout=20)
-            if resp.status_code != 200:
-                continue
-
-            soup = BeautifulSoup(resp.text, "html.parser")
-            for card in soup.select("li"):
-                title_el = card.select_one("h3.base-search-card__title")
-                company_el = card.select_one("h4.base-search-card__subtitle")
-                link_el = card.select_one("a.base-card__full-link")
-                location_el = card.select_one("span.job-search-card__location")
-
-                title = title_el.get_text(" ", strip=True) if title_el else ""
-                company = company_el.get_text(" ", strip=True) if company_el else ""
-                job_url = link_el.get("href", "").strip() if link_el else ""
-                location = location_el.get_text(" ", strip=True) if location_el else "Brasil"
-
-                if title and job_url:
-                    jobs_found.append(
-                        build_job(
-                            title=title,
-                            company=company,
-                            url=job_url,
-                            description=f"{title} {company} {location}",
-                            source="LinkedIn",
-                            location=location,
-                        )
+            for location in locations:
+                for start in (0, 25, 50):
+                    url = (
+                        "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+                        f"?keywords={quote_plus(kw)}&location={quote_plus(location)}&start={start}"
                     )
+                    resp = requests.get(url, headers=REQUEST_HEADERS, timeout=20)
+                    if resp.status_code != 200:
+                        continue
+
+                    soup = BeautifulSoup(resp.text, "html.parser")
+                    for card in soup.select("li"):
+                        title_el = card.select_one("h3.base-search-card__title")
+                        company_el = card.select_one("h4.base-search-card__subtitle")
+                        link_el = card.select_one("a.base-card__full-link")
+                        location_el = card.select_one("span.job-search-card__location")
+
+                        title = title_el.get_text(" ", strip=True) if title_el else ""
+                        company = company_el.get_text(" ", strip=True) if company_el else ""
+                        job_url = link_el.get("href", "").strip() if link_el else ""
+                        job_location = location_el.get_text(" ", strip=True) if location_el else location
+
+                        if not title or not job_url:
+                            continue
+
+                        dedup_key = f"{title.lower()}|{company.lower()}|{job_url}"
+                        if dedup_key in seen:
+                            continue
+                        seen.add(dedup_key)
+
+                        jobs_found.append(
+                            build_job(
+                                title=title,
+                                company=company,
+                                url=job_url,
+                                description=f"{title} {company} {job_location}",
+                                source="LinkedIn",
+                                location=job_location,
+                            )
+                        )
     except Exception as e:
         print(f"WARN: LinkedIn fetch error: {e}")
 

@@ -53,10 +53,35 @@ CANDIDATE = {
         "Kanban", "ITIL", "COBIT", "PMBOK", "SLA", "KPI", "ROI",
         
         # Diferenciais Pessoais
-        "FIAP", "Inglês", "Estratégia", "Strategy", "Inovação", "Innovation"
+        "FIAP", "Estratégia", "Strategy", "Inovação", "Innovation"
     ],
 }
 
+
+# Política de idioma do perfil:
+# - Permitido: inglês técnico/intermediário
+# - Bloqueado: inglês avançado/fluente obrigatório
+DISALLOWED_LANGUAGE_PATTERNS = [
+    "fluent english required",
+    "advanced english required",
+    "business fluent english",
+    "professional english required",
+    "native english",
+    "english is mandatory",
+    "mandatory english",
+    "c1 english",
+    "c2 english",
+    "english proficiency c1",
+    "english proficiency c2",
+    "bilingual mandatory",
+    "must be fluent in english",
+    "inglês fluente obrigatório",
+    "ingles fluente obrigatorio",
+    "inglês avançado obrigatório",
+    "ingles avancado obrigatorio",
+    "inglês obrigatório",
+    "ingles obrigatorio",
+]
 APPLICATIONS_FILE = os.path.join(os.path.dirname(__file__), "applications.json")
 REQUEST_HEADERS = {
     "User-Agent": (
@@ -233,6 +258,14 @@ def calculate_match(title: str, description: str) -> int:
                 score += 15
             else:
                 score += 8
+    def is_language_requirement_compatible(job: dict) -> bool:
+        """Filtra vagas incompatíveis com o nível de inglês definido no perfil."""
+        text = " ".join([
+            str(job.get("title", "")),
+            str(job.get("description", "")),
+            str(job.get("requirements", "")),
+        ]).lower()
+        return not any(pattern in text for pattern in DISALLOWED_LANGUAGE_PATTERNS)
                 
     return min(score, 100)
 
@@ -247,6 +280,8 @@ def is_profile_related(title: str, description: str) -> bool:
 
 def is_valid_job_url(url: str) -> bool:
     """Valida formato básico de URL para evitar links inválidos no dashboard."""
+            if not is_language_requirement_compatible(job):
+                continue
     if not url or url in ("#", ""):
         return False
     try:
@@ -296,7 +331,10 @@ def save_applications(apps: list):
 
 def deduplicate_and_save(new_jobs: list) -> list:
     """Salva apenas vagas novas (evita duplicatas por URL)."""
-    existing = load_existing_applications()
+    existing = [
+        app for app in load_existing_applications()
+        if is_valid_job_url(app.get("url", "")) and is_language_requirement_compatible(app)
+    ]
     existing_urls = {app.get("url") for app in existing}
     truly_new = [j for j in new_jobs if j.get("url") not in existing_urls]
     if truly_new:

@@ -51,7 +51,75 @@ jobs:
           echo "🚀 Iniciando: $LABEL"
           python rh_specialist.py "$LABEL"
 
-      # ─── 5. Salvar vagas encontradas no repositório ──────────────────────
+          # ─── 5. Validar política de idioma e links ───────────────────────────
+          - name: ✅ Validate job quality policy
+          run: |
+            python - <<'PY'
+            import json
+            import sys
+            from urllib.parse import urlparse
+
+            blocked_patterns = [
+              "fluent english required",
+              "advanced english required",
+              "business fluent english",
+              "professional english required",
+              "native english",
+              "english is mandatory",
+              "mandatory english",
+              "c1 english",
+              "c2 english",
+              "english proficiency c1",
+              "english proficiency c2",
+              "bilingual mandatory",
+              "must be fluent in english",
+              "inglês fluente obrigatório",
+              "ingles fluente obrigatorio",
+              "inglês avançado obrigatório",
+              "ingles avancado obrigatorio",
+              "inglês obrigatório",
+              "ingles obrigatorio",
+            ]
+
+            def valid_url(url: str) -> bool:
+              if not url:
+                return False
+              parsed = urlparse(url)
+              return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+            with open("applications.json", "r", encoding="utf-8") as f:
+              jobs = json.load(f)
+
+            bad_lang = []
+            bad_url = []
+            for job in jobs:
+              text = " ".join([
+                str(job.get("title", "")),
+                str(job.get("description", "")),
+                str(job.get("requirements", "")),
+              ]).lower()
+
+              if any(p in text for p in blocked_patterns):
+                bad_lang.append(job.get("title", "(sem título)"))
+
+              if not valid_url(str(job.get("url", ""))):
+                bad_url.append(job.get("title", "(sem título)"))
+
+            if bad_lang or bad_url:
+              if bad_lang:
+                print("ERRO: Vagas com inglês obrigatório/fluente detectadas:")
+                for title in bad_lang[:10]:
+                  print(f" - {title}")
+              if bad_url:
+                print("ERRO: Vagas com URL inválida detectadas:")
+                for title in bad_url[:10]:
+                  print(f" - {title}")
+              sys.exit(1)
+
+            print(f"OK: {len(jobs)} vagas validadas sem violar política de idioma e links.")
+            PY
+
+          # ─── 6. Salvar vagas encontradas no repositório ──────────────────────
       - name: 💾 Commit & Push applications.json
         run: |
           git config --global user.name  'RH-Agent-Bot 🤖'

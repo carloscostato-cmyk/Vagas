@@ -55,12 +55,12 @@ class TelegramCareerAgent:
             "🤖 <b>Agente de Carreira - Comandos</b>\n\n"
             "/start - Inicia o agente\n"
             "/status - Verifica configuracao do bot\n"
-            "/rh - Busca vagas (rapido, sem LinkedIn)\n"
-            "/rhfull - Busca vagas completa (inclui LinkedIn)\n"
+            "/rh - Busca vagas Brasil (rapido, sem LinkedIn)\n"
+            "/rhfull - Busca vagas Brasil completa (inclui LinkedIn)\n"
             "/submissions - Faz submissao automatica nas vagas novas\n"
             "/coach - Mostra insights do ciclo atual\n"
-            "/ciclo - Executa ciclo completo (rapido, sem LinkedIn)\n"
-            "/ciclofull - Executa ciclo completo (inclui LinkedIn)\n"
+            "/ciclo - Executa ciclo Brasil completo (rapido, sem LinkedIn)\n"
+            "/ciclofull - Executa ciclo Brasil completo (inclui LinkedIn)\n"
             "/help - Mostra esta ajuda"
         )
 
@@ -78,13 +78,14 @@ class TelegramCareerAgent:
             session_label="Telegram | RH Specialist",
             notify_telegram=False,
             include_linkedin=include_linkedin,
+            location_scope="brazil",
         )
         self.last_rh_report = report
         jobs_to_show = report.get("new_jobs", []) or report.get("top_jobs", [])
         self.notifier.send_job_report(
             jobs=jobs_to_show,
             session_label="Busca RH",
-            max_jobs=10,
+            max_jobs=15,
         )
 
     def _run_submissions_team(self):
@@ -133,10 +134,11 @@ class TelegramCareerAgent:
             session_label="Telegram | Operacao 3 Times",
             notify_telegram=False,
             include_linkedin=include_linkedin,
+            location_scope="brazil",
         )
         self.last_rh_report = report.get("rh", {})
         self.last_submissions = report.get("submitted", [])
-        self.notifier.send_management_report(report, max_jobs=10)
+        self.notifier.send_management_report(report, max_jobs=15)
 
     def _handle_text_command(self, text: str):
         command = text.strip().split()[0].lower()

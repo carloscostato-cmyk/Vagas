@@ -71,7 +71,28 @@ SOURCE_LABELS = {
     "linkedin": "LinkedIn",
     "freelance": "Freelance",
     "brasiltech": "BrasilTech",
+    "gupy": "Gupy",
+    "indeed": "Indeed",
+    "catho": "Catho",
 }
+
+BRAZIL_LOCATION_HINTS = [
+    "brasil",
+    "brazil",
+    "sao paulo",
+    "rio de janeiro",
+    "belo horizonte",
+    "curitiba",
+    "porto alegre",
+    "recife",
+    "fortaleza",
+    "campinas",
+    "hibrido",
+    "hibrida",
+    "presencial",
+    "remoto brasil",
+    "remote brazil",
+]
 
 APPLICATIONS_FILE = os.path.join(os.path.dirname(__file__), "applications.json")
 RUN_SUMMARY_FILE = os.path.join(os.path.dirname(__file__), "run_summary.json")
@@ -321,6 +342,123 @@ def fetch_brasiltech_jobs() -> list:
     return list(dedup.values())
 
 
+def fetch_gupy_jobs() -> list:
+    jobs_found = []
+    search_terms = ["gerente de projetos", "gerente de ti", "cybersecurity", "transformacao digital"]
+    try:
+        for kw in search_terms:
+            url = f"https://portal.gupy.io/job-search/term?query={quote_plus(kw)}"
+            resp = requests.get(url, headers=REQUEST_HEADERS, timeout=20)
+            if resp.status_code != 200:
+                continue
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for anchor in soup.select("a[href]"):
+                href = anchor.get("href", "").strip()
+                title = anchor.get_text(" ", strip=True)
+                if not href or not title:
+                    continue
+                if "/jobs/" not in href:
+                    continue
+
+                full_url = href if href.startswith("http") else f"https://portal.gupy.io{href}"
+                jobs_found.append(
+                    build_job(
+                        title=title,
+                        company="Gupy",
+                        url=full_url,
+                        description=f"{title} Gupy Brasil",
+                        source=SOURCE_LABELS["gupy"],
+                        location="Brasil",
+                    )
+                )
+    except Exception as e:
+        print(f"WARN: Gupy fetch error: {e}")
+
+    dedup = {}
+    for job in jobs_found:
+        dedup[job["url"]] = job
+    return list(dedup.values())
+
+
+def fetch_indeed_jobs() -> list:
+    jobs_found = []
+    search_terms = ["gerente+de+projetos", "gerente+de+ti", "cybersecurity+manager", "ai+project+manager"]
+    try:
+        for term in search_terms:
+            url = f"https://br.indeed.com/jobs?q={term}&l=Brasil"
+            resp = requests.get(url, headers=REQUEST_HEADERS, timeout=20)
+            if resp.status_code != 200:
+                continue
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for anchor in soup.select("a[href]"):
+                href = anchor.get("href", "").strip()
+                title = anchor.get_text(" ", strip=True)
+                if not href or not title:
+                    continue
+                if "/viewjob" not in href:
+                    continue
+
+                full_url = href if href.startswith("http") else f"https://br.indeed.com{href}"
+                jobs_found.append(
+                    build_job(
+                        title=title,
+                        company="Indeed",
+                        url=full_url,
+                        description=f"{title} Indeed Brasil",
+                        source=SOURCE_LABELS["indeed"],
+                        location="Brasil",
+                    )
+                )
+    except Exception as e:
+        print(f"WARN: Indeed fetch error: {e}")
+
+    dedup = {}
+    for job in jobs_found:
+        dedup[job["url"]] = job
+    return list(dedup.values())
+
+
+def fetch_catho_jobs() -> list:
+    jobs_found = []
+    search_terms = ["gerente-de-projetos", "gerente-de-ti", "cybersecurity", "transformacao-digital"]
+    try:
+        for term in search_terms:
+            url = f"https://www.catho.com.br/vagas/{term}/"
+            resp = requests.get(url, headers=REQUEST_HEADERS, timeout=20)
+            if resp.status_code != 200:
+                continue
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for anchor in soup.select("a[href]"):
+                href = anchor.get("href", "").strip()
+                title = anchor.get_text(" ", strip=True)
+                if not href or not title:
+                    continue
+                if "/vagas/" not in href:
+                    continue
+
+                full_url = href if href.startswith("http") else f"https://www.catho.com.br{href}"
+                jobs_found.append(
+                    build_job(
+                        title=title,
+                        company="Catho",
+                        url=full_url,
+                        description=f"{title} Catho Brasil",
+                        source=SOURCE_LABELS["catho"],
+                        location="Brasil",
+                    )
+                )
+    except Exception as e:
+        print(f"WARN: Catho fetch error: {e}")
+
+    dedup = {}
+    for job in jobs_found:
+        dedup[job["url"]] = job
+    return list(dedup.values())
+
+
 def calculate_match(title: str, description: str) -> int:
     score = 0
     text = f"{title} {description}".lower()
@@ -360,6 +498,23 @@ def is_language_requirement_compatible(job: dict) -> bool:
     return not any(pattern in text for pattern in DISALLOWED_LANGUAGE_PATTERNS)
 
 
+def is_location_scope_compatible(job: dict, location_scope: str) -> bool:
+    """
+    location_scope:
+      - "global": sem filtro de localizacao
+      - "brazil": aceita apenas vagas com sinais de localizacao no Brasil
+    """
+    if location_scope == "global":
+        return True
+
+    text = " ".join([
+        str(job.get("location", "")),
+        str(job.get("title", "")),
+        str(job.get("description", "")),
+    ]).lower()
+    return any(hint in text for hint in BRAZIL_LOCATION_HINTS)
+
+
 def load_existing_applications() -> list:
     try:
         with open(APPLICATIONS_FILE, "r", encoding="utf-8") as f:
@@ -378,7 +533,7 @@ def save_run_summary(summary: dict):
         json.dump(summary, f, indent=4, ensure_ascii=False)
 
 
-def filter_jobs_with_stats(raw_jobs_by_source: dict) -> tuple[list, dict]:
+def filter_jobs_with_stats(raw_jobs_by_source: dict, location_scope: str = "global") -> tuple[list, dict]:
     filtered = []
     stats = {}
 
@@ -392,6 +547,7 @@ def filter_jobs_with_stats(raw_jobs_by_source: dict) -> tuple[list, dict]:
                 "out_of_profile": 0,
                 "language_requirement": 0,
                 "low_match": 0,
+                    "location_scope": 0,
             },
         }
 
@@ -412,6 +568,10 @@ def filter_jobs_with_stats(raw_jobs_by_source: dict) -> tuple[list, dict]:
 
             if not is_language_requirement_compatible(job):
                 stats[source_key]["discarded"]["language_requirement"] += 1
+                continue
+
+            if not is_location_scope_compatible(job, location_scope):
+                stats[source_key]["discarded"]["location_scope"] += 1
                 continue
 
             score = calculate_match(title, desc)
@@ -457,6 +617,7 @@ def run_agent(
     session_label: str = "Ciclo Automatico",
     notify_telegram: bool = True,
     include_linkedin: bool | None = None,
+    location_scope: str = "global",
 ) -> dict:
     print("\n" + "=" * 60)
     print(f"AGENTE DE RH INICIADO - {session_label}")
@@ -481,6 +642,9 @@ def run_agent(
             "linkedin": fetch_linkedin_jobs() if linkedin_enabled else [],
             "freelance": fetch_remoteok_freelance_jobs(),
             "brasiltech": fetch_brasiltech_jobs(),
+            "gupy": fetch_gupy_jobs(),
+            "indeed": fetch_indeed_jobs(),
+            "catho": fetch_catho_jobs(),
         }
         if not linkedin_enabled:
             print("INFO: Fonte LinkedIn desativada (ENABLE_LINKEDIN_SOURCE=false).")
@@ -488,14 +652,14 @@ def run_agent(
         total_raw = sum(len(v) for v in raw_jobs_by_source.values())
         print(f" -> {total_raw} vagas brutas coletadas")
 
-        matched_jobs, source_stats = filter_jobs_with_stats(raw_jobs_by_source)
+        matched_jobs, source_stats = filter_jobs_with_stats(raw_jobs_by_source, location_scope=location_scope)
         print(f" -> {len(matched_jobs)} vagas com match suficiente")
 
         for source_key, info in source_stats.items():
             d = info["discarded"]
             print(
                 f"    [{info['label']}] coletadas={info['collected']} aceitas={info['accepted']} "
-                f"descartes(url={d['invalid_url']}, perfil={d['out_of_profile']}, idioma={d['language_requirement']}, score={d['low_match']})"
+                f"descartes(url={d['invalid_url']}, perfil={d['out_of_profile']}, idioma={d['language_requirement']}, local={d['location_scope']}, score={d['low_match']})"
             )
 
         new_jobs, total_saved = deduplicate_and_save(matched_jobs)

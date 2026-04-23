@@ -61,6 +61,7 @@ class CareerSuccessManager:
         session_label: str = "Operacao 3 Times",
         notify_telegram: bool = True,
         include_linkedin: bool | None = None,
+        location_scope: str = "global",
     ) -> dict:
         started_at = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         print("\n" + "=" * 60)
@@ -72,6 +73,7 @@ class CareerSuccessManager:
             session_label=f"{session_label} | RH Specialist",
             notify_telegram=notify_telegram,
             include_linkedin=include_linkedin,
+            location_scope=location_scope,
         )
         new_jobs = rh_report.get("new_jobs", [])
 

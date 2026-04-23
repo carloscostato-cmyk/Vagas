@@ -96,7 +96,7 @@ class TelegramNotifier:
         except ValueError:
             return False, "Resposta invalida (nao JSON) durante validacao do Telegram."
 
-    def send_job_report(self, jobs: list, session_label: str = "Relatorio", max_jobs: int = 10) -> bool:
+    def send_job_report(self, jobs: list, session_label: str = "Relatorio", max_jobs: int = 15) -> bool:
         """Envia um relatorio formatado de vagas encontradas."""
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
 
@@ -156,7 +156,7 @@ class TelegramNotifier:
         )
         return self._send(message)
 
-    def send_management_report(self, report: dict, max_jobs: int = 10) -> bool:
+    def send_management_report(self, report: dict, max_jobs: int = 15) -> bool:
         """Envia um resumo consolidado do ciclo com vagas clicaveis."""
         rh = report.get("rh", {})
         insights = report.get("insights", [])

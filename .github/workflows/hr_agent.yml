@@ -32,6 +32,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          LOGIN_USER_LINKEDIN: ${{ secrets.LOGIN_USER_LINKEDIN }}
+          KEY_SENHA_LINKEDIN: ${{ secrets.KEY_SENHA_LINKEDIN }}
         run: |
           HOUR=$(date -u +%H)
           if [ "$HOUR" = "12" ]; then LABEL="Ciclo Manha (09h)";

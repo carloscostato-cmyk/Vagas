@@ -8,6 +8,13 @@ on:
     - cron: '0 21 * * *'  # 18:00 BRT
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: rh-agent-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   hunt_and_notify:
     name: Cacar vagas e notificar Telegram
@@ -118,8 +125,9 @@ jobs:
 
       - name: Commit and push data files
         run: |
-          git config --global user.name 'RH-Agent-Bot'
-          git config --global user.email 'rh-agent@carloscostato.com'
+          git config user.name 'RH-Agent-Bot'
+          git config user.email 'rh-agent@carloscostato.com'
           git add applications.json run_summary.json
           git diff --staged --quiet || git commit -m "bot: atualiza vagas e resumo do ciclo [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push

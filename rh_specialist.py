@@ -85,6 +85,14 @@ REQUEST_HEADERS = {
 }
 
 
+def linkedin_source_enabled() -> bool:
+    """
+    Controla se as vagas do LinkedIn entram no pipeline.
+    Default: ativado.
+    """
+    return os.environ.get("ENABLE_LINKEDIN_SOURCE", "true").strip().lower() in ("1", "true", "yes", "on")
+
+
 def now_ts() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -445,7 +453,7 @@ def build_run_summary(session_label: str, source_stats: dict, total_filtered: in
     }
 
 
-def run_agent(session_label: str = "Ciclo Automatico"):
+def run_agent(session_label: str = "Ciclo Automatico") -> dict:
     print("\n" + "=" * 60)
     print(f"AGENTE DE RH INICIADO - {session_label}")
     print(f"Horario: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} (UTC)")
@@ -455,7 +463,7 @@ def run_agent(session_label: str = "Ciclo Automatico"):
     is_valid_telegram, validation_msg = notifier.validate_configuration()
     print(f"Telegram check: {validation_msg}")
     if not is_valid_telegram:
-        raise RuntimeError(f"Configuracao Telegram invalida: {validation_msg}")
+        print("WARN: Telegram indisponivel para este ciclo. Coleta e persistencia continuarao normalmente.")
 
     if linkedin_credentials_configured():
         print("INFO: Credenciais LinkedIn detectadas nos secrets do workflow.")
@@ -465,10 +473,12 @@ def run_agent(session_label: str = "Ciclo Automatico"):
         raw_jobs_by_source = {
             "remotive": fetch_remotive_jobs(),
             "arbeitnow": fetch_arbeitnow_jobs(),
-            "linkedin": fetch_linkedin_jobs(),
+            "linkedin": fetch_linkedin_jobs() if linkedin_source_enabled() else [],
             "freelance": fetch_remoteok_freelance_jobs(),
             "brasiltech": fetch_brasiltech_jobs(),
         }
+        if not linkedin_source_enabled():
+            print("INFO: Fonte LinkedIn desativada (ENABLE_LINKEDIN_SOURCE=false).")
 
         total_raw = sum(len(v) for v in raw_jobs_by_source.values())
         print(f" -> {total_raw} vagas brutas coletadas")
@@ -495,17 +505,40 @@ def run_agent(session_label: str = "Ciclo Automatico"):
         )
         save_run_summary(summary)
 
-        print("Enviando relatorio ao Telegram...")
-        sent = notifier.send_job_report(
-            jobs=new_jobs if new_jobs else matched_jobs[:5],
-            session_label=session_label,
-        )
-        if not sent:
-            raise RuntimeError("Falha ao enviar mensagem ao Telegram. Verifique TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID.")
+        notification_status = "skipped"
+        if is_valid_telegram:
+            print("Enviando relatorio ao Telegram...")
+            sent = notifier.send_job_report(
+                jobs=new_jobs if new_jobs else matched_jobs[:5],
+                session_label=session_label,
+            )
+            notification_status = "sent" if sent else "failed"
+            if not sent:
+                print("WARN: Falha ao enviar mensagem ao Telegram (ciclo mantido como sucesso operacional).")
+        else:
+            print("INFO: Relatorio Telegram nao enviado por configuracao invalida.")
+
+        return {
+            "session_label": session_label,
+            "telegram": {
+                "configured": is_valid_telegram,
+                "validation_message": validation_msg,
+                "status": notification_status,
+            },
+            "total_raw": total_raw,
+            "total_matched": len(matched_jobs),
+            "total_saved": total_saved,
+            "total_new": len(new_jobs),
+            "source_stats": source_stats,
+            "new_jobs": new_jobs,
+            "top_jobs": matched_jobs[:5],
+            "summary": summary,
+        }
 
     except Exception as e:
         print(f"ERRO: {e}")
-        notifier.send_error_alert(str(e))
+        if is_valid_telegram:
+            notifier.send_error_alert(str(e))
         raise
 
 

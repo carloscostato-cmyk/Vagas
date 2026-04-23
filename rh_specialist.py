@@ -452,6 +452,10 @@ def run_agent(session_label: str = "Ciclo Automatico"):
     print("=" * 60 + "\n")
 
     notifier = TelegramNotifier()
+    is_valid_telegram, validation_msg = notifier.validate_configuration()
+    print(f"Telegram check: {validation_msg}")
+    if not is_valid_telegram:
+        raise RuntimeError(f"Configuracao Telegram invalida: {validation_msg}")
 
     if linkedin_credentials_configured():
         print("INFO: Credenciais LinkedIn detectadas nos secrets do workflow.")

@@ -4,6 +4,7 @@ Responsável por enviar relatórios e alertas de vagas ao Carlos Costato.
 """
 
 import os
+import html
 import requests
 from datetime import datetime
 
@@ -13,6 +14,8 @@ PORTFOLIO_URL = "https://carloscostato-cmyk.github.io/Costato/"
 
 
 class TelegramNotifier:
+    MAX_TELEGRAM_TEXT_LENGTH = 4096
+
     def __init__(self):
         self.bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
         self.chat_id   = os.environ.get("TELEGRAM_CHAT_ID")
@@ -24,6 +27,15 @@ class TelegramNotifier:
             print("ERRO: TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID nao configurados.")
             print("   Acesse: GitHub repo -> Settings -> Secrets and variables -> Actions")
             return False
+        if len(message) > self.MAX_TELEGRAM_TEXT_LENGTH:
+            print(
+                "WARN: Mensagem acima do limite do Telegram "
+                f"({len(message)} chars). Truncando para {self.MAX_TELEGRAM_TEXT_LENGTH}."
+            )
+            message = (
+                message[: self.MAX_TELEGRAM_TEXT_LENGTH - 80]
+                + "\n\n<i>[Mensagem truncada por limite do Telegram]</i>"
+            )
 
         payload = {
             "chat_id":    self.chat_id,
@@ -33,11 +45,56 @@ class TelegramNotifier:
         try:
             response = requests.post(self.api_url, json=payload, timeout=10)
             response.raise_for_status()
+            data = response.json()
+            if not data.get("ok", False):
+                print(
+                    "FALHA: Telegram rejeitou a mensagem. "
+                    f'error_code={data.get("error_code")} description="{data.get("description", "sem descricao")}"'
+                )
+                return False
             print("OK: Mensagem enviada ao Telegram com sucesso!")
             return True
         except requests.exceptions.RequestException as e:
             print(f"FALHA: Erro ao enviar mensagem para o Telegram: {e}")
             return False
+        except ValueError:
+            print("FALHA: Resposta da API Telegram nao veio em JSON valido.")
+            return False
+
+    def validate_configuration(self) -> tuple[bool, str]:
+        """Valida token/chat_id no Telegram antes de enviar mensagens."""
+        if not self.bot_token or not self.chat_id:
+            return (
+                False,
+                "TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID ausentes nos secrets do GitHub.",
+            )
+
+        try:
+            me_url = f"https://api.telegram.org/bot{self.bot_token}/getMe"
+            me_resp = requests.get(me_url, timeout=10)
+            me_resp.raise_for_status()
+            me_data = me_resp.json()
+            if not me_data.get("ok", False):
+                return (
+                    False,
+                    f'Token invalido/rejeitado. Telegram: "{me_data.get("description", "sem descricao")}"',
+                )
+
+            chat_url = f"https://api.telegram.org/bot{self.bot_token}/getChat"
+            chat_resp = requests.get(chat_url, params={"chat_id": self.chat_id}, timeout=10)
+            chat_resp.raise_for_status()
+            chat_data = chat_resp.json()
+            if not chat_data.get("ok", False):
+                return (
+                    False,
+                    f'Chat ID invalido/acesso negado. Telegram: "{chat_data.get("description", "sem descricao")}"',
+                )
+
+            return True, "Configuracao Telegram valida."
+        except requests.exceptions.RequestException as e:
+            return False, f"Falha de rede ao validar Telegram: {e}"
+        except ValueError:
+            return False, "Resposta invalida (nao JSON) durante validacao do Telegram."
 
     def send_job_report(self, jobs: list, session_label: str = "Relatorio") -> bool:
         """Envia um relatorio formatado de vagas encontradas."""
@@ -63,14 +120,15 @@ class TelegramNotifier:
             for i, job in enumerate(jobs[:8], 1):
                 score       = job.get("match_score", 0)
                 score_emoji = "🔥" if score > 60 else "⭐"
-                source      = job.get("source", "Agente").capitalize()
-                location    = job.get("location", "")
-                url         = job.get("url", "")
+                source      = html.escape(str(job.get("source", "Agente")).capitalize())
+                location    = html.escape(str(job.get("location", "")))
+                url         = html.escape(str(job.get("url", "")), quote=True)
+                title       = html.escape(str(job.get("title", "N/A")))
                 loc_str     = f"\n   📍 {location}" if location and location != "Nao informado" else ""
                 url_str     = f"\n   🔗 <a href=\"{url}\">Ver Vaga Agora</a>" if url and url not in ("#", "") else ""
                 lines.append(
-                    f"{score_emoji} <b>{i}. {job.get('title', 'N/A')}</b>\n"
-                    f"   🏢 {job.get('company', 'N/A')}\n"
+                    f"{score_emoji} <b>{i}. {title}</b>\n"
+                    f"   🏢 {html.escape(str(job.get('company', 'N/A')))}\n"
                     f"   📡 {source} · 📊 Match: {score}%"
                     f"{loc_str}"
                     f"{url_str}\n"
@@ -97,6 +155,38 @@ class TelegramNotifier:
             f"<i>Verifique o GitHub Actions para mais detalhes.</i>"
         )
         return self._send(message)
+
+    def send_management_report(self, report: dict) -> bool:
+        """Envia um resumo consolidado da operacao dos 3 times."""
+        rh = report.get("rh", {})
+        insights = report.get("insights", [])
+        submitted = report.get("submitted", [])
+
+        lines = [
+            f"🧠 <b>Gerente de Carreira | {report.get('session_label', 'Ciclo')}</b>",
+            f"🕐 {report.get('started_at', datetime.now().strftime('%d/%m/%Y %H:%M'))}",
+            "",
+            "<b>Times em execucao:</b>",
+            f"1) RH Specialist: {rh.get('total_raw', 0)} brutas · {rh.get('total_matched', 0)} aderentes · {rh.get('total_new', 0)} novas",
+            f"2) Submission Team: {len(submitted)} submissao(oes)",
+            f"3) Career Coach: {len(insights)} insight(s)",
+            "",
+            "<b>Direcionamento do Coach:</b>",
+        ]
+
+        if insights:
+            for item in insights[:4]:
+                lines.append(f"• {item}")
+        else:
+            lines.append("• Sem insights neste ciclo.")
+
+        lines += [
+            "",
+            f"📊 <a href=\"{DASHBOARD_URL}\">Abrir Dashboard ao Vivo</a>",
+            "<i>Operacao unificada concluida.</i>",
+        ]
+
+        return self._send("\n".join(lines))
 
 
 if __name__ == "__main__":

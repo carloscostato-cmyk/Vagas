@@ -1,65 +1,65 @@
 {
-    "generated_at": "2026-04-24 17:20:06",
-    "session_label": "Teste Especialista Melhorado",
-    "linkedin_credentials_configured": false,
+    "generated_at": "2026-04-24 21:54:42",
+    "session_label": "Ciclo Noite (18h)",
+    "linkedin_credentials_configured": true,
     "sources": {
         "remotive": {
             "label": "Remotive",
             "collected": 240,
-            "accepted": 144,
+            "accepted": 180,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
-                "language_requirement": 12,
-                "low_match": 84,
+                "language_requirement": 0,
+                "low_match": 60,
                 "location_scope": 0
             }
         },
         "arbeitnow": {
             "label": "Arbeitnow",
             "collected": 400,
-            "accepted": 40,
+            "accepted": 60,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 360,
+                "low_match": 340,
                 "location_scope": 0
             }
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1342,
-            "accepted": 577,
+            "collected": 1258,
+            "accepted": 529,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 273,
+                "out_of_profile": 252,
                 "language_requirement": 0,
-                "low_match": 492,
+                "low_match": 477,
                 "location_scope": 0
             }
         },
         "freelance": {
             "label": "Freelance",
             "collected": 22,
-            "accepted": 20,
+            "accepted": 21,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 2,
+                "low_match": 1,
                 "location_scope": 0
             }
         },
         "brasiltech": {
             "label": "BrasilTech",
-            "collected": 35,
-            "accepted": 1,
+            "collected": 0,
+            "accepted": 0,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 25,
+                "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 9,
+                "low_match": 0,
                 "location_scope": 0
             }
         },
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 782,
-        "saved": 3327,
-        "new": 577
+        "filtered": 790,
+        "saved": 3876,
+        "new": 549
     }
 }

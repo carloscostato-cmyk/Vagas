@@ -137,7 +137,7 @@ class SkillWorkflowManager:
             result = subprocess.run(['git', 'add', '.'], 
                                   capture_output=True, text=True, cwd='.')
             if result.returncode != 0:
-                print(f"❌ Erro no git add: {result.stderr}")
+                print(f"Erro no git add: {result.stderr}")
                 return False
             
             # Commit
@@ -145,21 +145,21 @@ class SkillWorkflowManager:
             result = subprocess.run(['git', 'commit', '-m', commit_msg], 
                                   capture_output=True, text=True, cwd='.')
             if result.returncode != 0:
-                print(f"❌ Erro no git commit: {result.stderr}")
+                print(f"Erro no git commit: {result.stderr}")
                 return False
             
             # Push
             result = subprocess.run(['git', 'push'], 
                                   capture_output=True, text=True, cwd='.')
             if result.returncode != 0:
-                print(f"❌ Erro no git push: {result.stderr}")
+                print(f"Erro no git push: {result.stderr}")
                 return False
             
-            print("✅ Commit e push realizados com sucesso")
+            print("Commit e push realizados com sucesso")
             return True
             
         except Exception as e:
-            print(f"❌ Erro no commit/push: {e}")
+            print(f"Erro no commit/push: {e}")
             return False
     
     def quick_change(self, file_path: str, old_text: str, new_text: str, description: str) -> bool:

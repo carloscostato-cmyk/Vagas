@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seu Jairo - SAAS B2C (MVP local)</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #121a2b;
+        --text: #e9eefc;
+        --muted: #aab6d6;
+        --line: rgba(255, 255, 255, 0.12);
+        --accent: #5aa7ff;
+        --danger: #ff6b6b;
+        --ok: #34d399;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(1200px 800px at 15% 10%, rgba(90, 167, 255, 0.12), transparent),
+          radial-gradient(900px 700px at 90% 40%, rgba(52, 211, 153, 0.10), transparent),
+          var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        line-height: 1.45;
+      }
+      .wrap {
+        max-width: 980px;
+        padding: 28px 18px 60px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      h1 { margin: 0; font-size: 20px; }
+      .subtitle { margin-top: 6px; color: var(--muted); font-size: 13px; }
+      .pill {
+        border: 1px solid var(--line);
+        color: var(--muted);
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        white-space: nowrap;
+        height: fit-content;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 14px;
+      }
+      @media (max-width: 860px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+      .card {
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0));
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      }
+      label { display:block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+      input, select, button, textarea {
+        width: 100%;
+        padding: 10px 11px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        outline: none;
+      }
+      input::file-selector-button {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.06);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 8px;
+        margin-right: 10px;
+      }
+      button {
+        background: linear-gradient(180deg, rgba(90,167,255,0.22), rgba(90,167,255,0.12));
+        border-color: rgba(90,167,255,0.35);
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:disabled { opacity: 0.55; cursor: not-allowed; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+      .error { color: var(--danger); font-size: 13px; margin-top: 10px; }
+      .ok { color: var(--ok); font-size: 13px; margin-top: 10px; }
+      .list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 11px;
+        background: rgba(0,0,0,0.12);
+      }
+      .item-title { display:flex; justify-content:space-between; gap: 10px; }
+      .item-title strong { font-size: 14px; }
+      .badge {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .item p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Seu Jairo (MVP local)</h1>
+          <div class="subtitle">
+            Envie seu currículo e veja sugestões de profissões/áreas correlatas. Tudo local.
+          </div>
+        </div>
+        <div class="pill mono">API: <span id="apiBase"></span></div>
+      </header>
+
+      <div class="grid">
+        <div class="card">
+          <form id="form">
+            <div class="row">
+              <div>
+                <label for="fullName">Nome completo</label>
+                <input id="fullName" name="fullName" placeholder="Ex.: João da Silva" required />
+              </div>
+              <div>
+                <label for="linkedin">LinkedIn (opcional)</label>
+                <input id="linkedin" name="linkedin" placeholder="https://www.linkedin.com/in/..." />
+              </div>
+            </div>
+
+            <label for="resume">Currículo (PDF/DOCX/TXT)</label>
+            <input id="resume" name="resume" type="file" accept=".pdf,.docx,.txt,application/pdf,text/plain" required />
+            <div class="hint">
+              Dica: PDF escaneado pode não ter texto extraível. Se der erro, teste com DOCX/TXT.
+            </div>
+
+            <label for="limit">Quantas recomendações</label>
+            <select id="limit" name="limit">
+              <option value="5">5</option>
+              <option value="8" selected>8</option>
+              <option value="12">12</option>
+            </select>
+
+            <div style="margin-top: 14px; display:flex; gap:10px;">
+              <button id="btnAnalyze" type="submit">Analisar e recomendar</button>
+              <button id="btnExtract" type="button" title="Ver prévia do texto extraído">Só extrair texto</button>
+            </div>
+
+            <div id="status" class=""></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; gap: 10px; align-items:center;">
+            <strong>Resultado</strong>
+            <span class="badge mono" id="meta"></span>
+          </div>
+          <div id="output" class="list"></div>
+          <footer>
+            Próximo passo: incluir “combo box” para profissões correlatas + canal Telegram/WhatsApp.
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <script src="/ui/app.js"></script>
+  </body>
+</html>
+

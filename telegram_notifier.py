@@ -161,7 +161,7 @@ class TelegramNotifier:
         rh = report.get("rh", {})
         insights = report.get("insights", [])
         submitted = report.get("submitted", [])
-        jobs = rh.get("new_jobs", []) or rh.get("top_jobs", [])
+        jobs = rh.get("new_jobs", [])
 
         lines = [
             f"🧠 <b>Agente de Carreira | {report.get('session_label', 'Ciclo')}</b>",

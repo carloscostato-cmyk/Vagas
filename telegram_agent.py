@@ -19,6 +19,7 @@ import requests
 
 from career_success_manager import CareerSuccessManager
 from rh_specialist import run_agent
+from skill_agents_system import ChangeRequest, SkillAgentsSystem
 from submission_engine import SubmissionEngine
 from telegram_notifier import TelegramNotifier
 
@@ -28,6 +29,7 @@ class TelegramCareerAgent:
         self.notifier = TelegramNotifier()
         self.submission_engine = SubmissionEngine()
         self.manager = CareerSuccessManager(max_auto_apply=3)
+        self.skill_system = SkillAgentsSystem()
         self.offset = None
         self.poll_timeout = 25
         self.last_rh_report = None
@@ -59,6 +61,7 @@ class TelegramCareerAgent:
             "/rhfull - Busca vagas Brasil completa (inclui LinkedIn)\n"
             "/submissions - Faz submissao automatica nas vagas novas\n"
             "/coach - Mostra insights do ciclo atual\n"
+            "/review - Executa review dos 3 especialistas + guardiao\n"
             "/ciclo - Executa ciclo Brasil completo (rapido, sem LinkedIn)\n"
             "/ciclofull - Executa ciclo Brasil completo (inclui LinkedIn)\n"
             "/help - Mostra esta ajuda"
@@ -81,12 +84,39 @@ class TelegramCareerAgent:
             location_scope="brazil",
         )
         self.last_rh_report = report
-        jobs_to_show = report.get("new_jobs", []) or report.get("top_jobs", [])
         self.notifier.send_job_report(
-            jobs=jobs_to_show,
+            jobs=report.get("new_jobs", []),
             session_label="Busca RH",
             max_jobs=15,
         )
+
+    def _run_review_team(self):
+        sample_request = ChangeRequest(
+            description="Revisao operacional do ciclo atual sem alterar comportamento estavel.",
+            files_to_modify=[],
+            risk_level="low",
+            urgency="low",
+        )
+        result = self.skill_system.request_approval(sample_request)
+
+        details = result.get("details", [])
+        if isinstance(details, dict):
+            details = details.get("review", [])
+
+        header = "✅ <b>/review concluido</b>" if result.get("approved") else "🛡️ <b>/review concluido</b>"
+        lines = [
+            header,
+            f"Status: {result.get('reason', 'revisao com bloqueios')}",
+            "",
+            "Parecer dos 4 especialistas:",
+        ]
+        for decision in details[:4]:
+            agent_name = getattr(decision, "agent_name", "agente")
+            decision_name = getattr(getattr(decision, "decision", None), "name", "PENDING")
+            reasoning = getattr(decision, "reasoning", "sem detalhes")
+            emoji = "✅" if decision_name == "APPROVED" else "⛔"
+            lines.append(f"{emoji} {agent_name}: {reasoning}")
+        self._send_text("\n".join(lines))
 
     def _run_submissions_team(self):
         if not self.last_rh_report:
@@ -168,6 +198,9 @@ class TelegramCareerAgent:
             return
         if command in ("/coach", "coach"):
             self._run_coach_team()
+            return
+        if command in ("/review", "review"):
+            self._run_review_team()
             return
         if command in ("/ciclo", "ciclo", "/run", "run"):
             self._run_full_cycle(include_linkedin=False)

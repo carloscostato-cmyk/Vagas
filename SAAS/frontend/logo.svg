@@ -1,0 +1,24 @@
+<!-- Logo SVG: Senhorzinho de boina verde, óculos, lupa e nome abaixo -->
+<svg width="220" height="260" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Boina verde -->
+  <ellipse cx="110" cy="60" rx="60" ry="30" fill="#2e7d32"/>
+  <ellipse cx="110" cy="80" rx="55" ry="40" fill="#f5e0c3"/>
+  <!-- Rosto -->
+  <ellipse cx="110" cy="120" rx="50" ry="55" fill="#f5e0c3" stroke="#bfa77a" stroke-width="2"/>
+  <!-- Óculos -->
+  <ellipse cx="85" cy="120" rx="18" ry="12" fill="white" stroke="#333" stroke-width="2"/>
+  <ellipse cx="135" cy="120" rx="18" ry="12" fill="white" stroke="#333" stroke-width="2"/>
+  <rect x="103" y="118" width="14" height="4" fill="#333"/>
+  <!-- Olhos -->
+  <ellipse cx="85" cy="120" rx="5" ry="5" fill="#333"/>
+  <ellipse cx="135" cy="120" rx="5" ry="5" fill="#333"/>
+  <!-- Lupa -->
+  <circle cx="160" cy="150" r="15" fill="white" stroke="#888" stroke-width="3"/>
+  <rect x="172" y="162" width="6" height="24" rx="3" fill="#888" transform="rotate(40 172 162)"/>
+  <!-- Sorriso -->
+  <path d="M90 145 Q110 165 130 145" stroke="#bfa77a" stroke-width="3" fill="none"/>
+  <!-- Corpo -->
+  <rect x="80" y="175" width="60" height="40" rx="20" fill="#4caf50"/>
+  <!-- Nome -->
+  <text x="110" y="245" font-size="24" font-family="Arial, Helvetica, sans-serif" fill="#222" text-anchor="middle" font-weight="bold">Seu Jairo</text>
+</svg>

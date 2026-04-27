@@ -136,8 +136,35 @@ class ReviewAgent:
             return self._review_for_bugs(change_request)
         elif self.specialty == "security":
             return self._review_for_security(change_request)
+        elif self.specialty == "stability_guard":
+            return self._review_for_stability_guard(change_request)
         else:  # patterns
             return self._review_for_patterns(change_request)
+
+    def _review_for_stability_guard(self, change_request: ChangeRequest) -> AgentDecision:
+        """Guardiao: bloqueia mudancas em arquivos estaveis sem justificativa explicita."""
+        protected_files = {"rh_specialist.py", "telegram_agent.py", "telegram_notifier.py"}
+        touched_protected = [f for f in change_request.files_to_modify if f in protected_files]
+
+        if touched_protected:
+            return AgentDecision(
+                agent_name=self.agent_name,
+                agent_type=AgentType.REVIEW,
+                decision=ApprovalStatus.REJECTED,
+                reasoning=(
+                    "Mudanca bloqueada pelo guardiao de estabilidade em componentes funcionais: "
+                    + ", ".join(touched_protected)
+                ),
+                confidence=0.95,
+            )
+
+        return AgentDecision(
+            agent_name=self.agent_name,
+            agent_type=AgentType.REVIEW,
+            decision=ApprovalStatus.APPROVED,
+            reasoning="Nenhum componente estavel foi alterado.",
+            confidence=0.95,
+        )
     
     def _review_for_bugs(self, change_request: ChangeRequest) -> AgentDecision:
         """Review focado em bugs e lógica"""
@@ -247,7 +274,8 @@ class SkillAgentsSystem:
         self.review_agents = [
             ReviewAgent(1, "bugs"),
             ReviewAgent(2, "security"), 
-            ReviewAgent(3, "patterns")
+            ReviewAgent(3, "patterns"),
+            ReviewAgent(4, "stability_guard"),
         ]
     
     def request_approval(self, change_request: ChangeRequest) -> Dict[str, any]:
@@ -267,7 +295,7 @@ class SkillAgentsSystem:
         # Verificar aprovação dos reviews
         approved_reviews = sum(1 for d in review_decisions if d.decision == ApprovalStatus.APPROVED)
         
-        if approved_reviews < 3:
+        if approved_reviews < len(self.review_agents):
             return {
                 "approved": False,
                 "reason": "Rejeitado na fase de review",

@@ -5,7 +5,7 @@ RH Specialist Agent - Busca de vagas + notificacao Telegram.
 import json
 import os
 from datetime import datetime
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import parse_qsl, quote_plus, urlencode, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -99,6 +99,20 @@ REQUEST_HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/124.0.0.0 Safari/537.36"
     )
+}
+
+TRACKING_QUERY_PARAMS = {
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "gclid",
+    "fbclid",
+    "trk",
+    "tracking",
+    "ref",
+    "refid",
 }
 
 
@@ -533,6 +547,56 @@ def is_valid_job_url(url: str) -> bool:
         return False
 
 
+def normalize_job_url(url: str) -> str:
+    """Normaliza URL para deduplicacao estavel entre fontes e ciclos."""
+    if not is_valid_job_url(url):
+        return ""
+
+    parsed = urlparse(url.strip())
+    scheme = (parsed.scheme or "https").lower()
+    host = (parsed.netloc or "").lower()
+    path = parsed.path or "/"
+    if path != "/":
+        path = path.rstrip("/")
+
+    kept_query = []
+    for key, value in parse_qsl(parsed.query, keep_blank_values=False):
+        if key.lower() in TRACKING_QUERY_PARAMS:
+            continue
+        kept_query.append((key, value))
+
+    query = urlencode(sorted(kept_query)) if kept_query else ""
+    if query:
+        return f"{scheme}://{host}{path}?{query}"
+    return f"{scheme}://{host}{path}"
+
+
+def job_dedup_key(job: dict) -> str:
+    """Chave unica por vaga, priorizando URL normalizada."""
+    normalized_url = normalize_job_url(str(job.get("url", "")))
+    if normalized_url:
+        return f"url:{normalized_url}"
+
+    title = str(job.get("title", "")).strip().lower()
+    company = str(job.get("company", "")).strip().lower()
+    source = str(job.get("source", "")).strip().lower()
+    return f"meta:{title}|{company}|{source}"
+
+
+def deduplicate_jobs(jobs: list) -> list:
+    """Remove repeticoes preservando o primeiro registro visto."""
+    unique = {}
+    for job in jobs:
+        key = job_dedup_key(job)
+        if key in unique:
+            continue
+        normalized = normalize_job_url(str(job.get("url", "")))
+        if normalized:
+            job = {**job, "url": normalized}
+        unique[key] = job
+    return list(unique.values())
+
+
 def is_language_requirement_compatible(job: dict) -> bool:
     text = " ".join([
         str(job.get("title", "")),
@@ -636,9 +700,13 @@ def deduplicate_and_save(new_jobs: list) -> tuple[list, int]:
         app for app in load_existing_applications()
         if is_valid_job_url(app.get("url", "")) and is_language_requirement_compatible(app)
     ]
-    existing_urls = {app.get("url") for app in existing}
-    truly_new = [j for j in new_jobs if j.get("url") not in existing_urls]
-    final_apps = existing + truly_new
+
+    existing = deduplicate_jobs(existing)
+    new_jobs = deduplicate_jobs(new_jobs)
+
+    existing_keys = {job_dedup_key(app) for app in existing}
+    truly_new = [j for j in new_jobs if job_dedup_key(j) not in existing_keys]
+    final_apps = deduplicate_jobs(existing + truly_new)
     save_applications(final_apps)
     return truly_new, len(final_apps)
 
@@ -721,10 +789,7 @@ def run_agent(
         notification_status = "skipped"
         if notify_telegram and is_valid_telegram:
             print("Enviando relatorio ao Telegram...")
-            sent = notifier.send_job_report(
-                jobs=new_jobs if new_jobs else matched_jobs[:5],
-                session_label=session_label,
-            )
+            sent = notifier.send_job_report(jobs=new_jobs, session_label=session_label)
             notification_status = "sent" if sent else "failed"
             if not sent:
                 print("WARN: Falha ao enviar mensagem ao Telegram (ciclo mantido como sucesso operacional).")

@@ -1,6 +1,6 @@
 {
-    "generated_at": "2026-05-10 15:54:02",
-    "session_label": "Ciclo Meio-dia (12h)",
+    "generated_at": "2026-05-10 16:43:51",
+    "session_label": "Ciclo Tarde (13h)",
     "linkedin_credentials_configured": true,
     "sources": {
         "remotive": {
@@ -29,25 +29,25 @@
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1331,
-            "accepted": 559,
+            "collected": 1318,
+            "accepted": 529,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 269,
+                "out_of_profile": 254,
                 "language_requirement": 0,
-                "low_match": 503,
+                "low_match": 535,
                 "location_scope": 0
             }
         },
         "freelance": {
             "label": "Freelance",
-            "collected": 23,
+            "collected": 24,
             "accepted": 19,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 4,
+                "low_match": 5,
                 "location_scope": 0
             }
         },
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 938,
-        "saved": 32177,
-        "new": 566
+        "filtered": 908,
+        "saved": 32706,
+        "new": 529
     }
 }

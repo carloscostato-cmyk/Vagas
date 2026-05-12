@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-05-12 17:54:30",
+    "generated_at": "2026-05-12 22:17:59",
     "session_label": "Ciclo Noite (18h)",
     "linkedin_credentials_configured": true,
     "sources": {
@@ -29,13 +29,13 @@
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1322,
-            "accepted": 554,
+            "collected": 1327,
+            "accepted": 574,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 248,
+                "out_of_profile": 239,
                 "language_requirement": 0,
-                "low_match": 520,
+                "low_match": 514,
                 "location_scope": 0
             }
         },
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 935,
-        "saved": 37345,
-        "new": 554
+        "filtered": 955,
+        "saved": 37922,
+        "new": 577
     }
 }

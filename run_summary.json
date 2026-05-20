@@ -1,48 +1,48 @@
 {
-    "generated_at": "2026-05-19 22:21:42",
+    "generated_at": "2026-05-20 14:29:41",
     "session_label": "Ciclo Noite (18h)",
     "linkedin_credentials_configured": true,
     "sources": {
         "remotive": {
             "label": "Remotive",
-            "collected": 216,
+            "collected": 228,
             "accepted": 204,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 12,
+                "low_match": 24,
                 "location_scope": 0
             }
         },
         "arbeitnow": {
             "label": "Arbeitnow",
             "collected": 400,
-            "accepted": 204,
+            "accepted": 197,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 196,
+                "low_match": 203,
                 "location_scope": 0
             }
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1268,
-            "accepted": 507,
+            "collected": 1369,
+            "accepted": 588,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 253,
+                "out_of_profile": 258,
                 "language_requirement": 0,
-                "low_match": 508,
+                "low_match": 523,
                 "location_scope": 0
             }
         },
         "freelance": {
             "label": "Freelance",
-            "collected": 21,
-            "accepted": 18,
+            "collected": 22,
+            "accepted": 19,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 933,
-        "saved": 51871,
-        "new": 520
+        "filtered": 1008,
+        "saved": 52520,
+        "new": 649
     }
 }

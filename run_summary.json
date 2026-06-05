@@ -1,53 +1,53 @@
 {
-    "generated_at": "2026-06-04 22:25:22",
+    "generated_at": "2026-06-05 14:18:34",
     "session_label": "Ciclo Noite (18h)",
     "linkedin_credentials_configured": true,
     "sources": {
         "remotive": {
             "label": "Remotive",
             "collected": 288,
-            "accepted": 264,
+            "accepted": 276,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 24,
+                "low_match": 12,
                 "location_scope": 0
             }
         },
         "arbeitnow": {
             "label": "Arbeitnow",
             "collected": 400,
-            "accepted": 189,
+            "accepted": 112,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
-                "language_requirement": 0,
-                "low_match": 211,
+                "language_requirement": 4,
+                "low_match": 284,
                 "location_scope": 0
             }
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 229,
-            "accepted": 141,
+            "collected": 1344,
+            "accepted": 573,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 36,
+                "out_of_profile": 246,
                 "language_requirement": 0,
-                "low_match": 52,
+                "low_match": 525,
                 "location_scope": 0
             }
         },
         "freelance": {
             "label": "Freelance",
-            "collected": 27,
-            "accepted": 16,
+            "collected": 23,
+            "accepted": 14,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 3,
                 "language_requirement": 2,
-                "low_match": 6,
+                "low_match": 4,
                 "location_scope": 0
             }
         },
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 610,
-        "saved": 87659,
-        "new": 149
+        "filtered": 975,
+        "saved": 88260,
+        "new": 601
     }
 }

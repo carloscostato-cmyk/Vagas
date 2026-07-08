@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-07-07 22:16:37",
+    "generated_at": "2026-07-08 13:24:05",
     "session_label": "Ciclo Noite (18h)",
     "linkedin_credentials_configured": true,
     "sources": {
@@ -18,31 +18,31 @@
         "arbeitnow": {
             "label": "Arbeitnow",
             "collected": 400,
-            "accepted": 148,
+            "accepted": 140,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
                 "language_requirement": 0,
-                "low_match": 252,
+                "low_match": 260,
                 "location_scope": 0
             }
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1187,
-            "accepted": 524,
+            "collected": 1307,
+            "accepted": 620,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 219,
+                "out_of_profile": 237,
                 "language_requirement": 0,
-                "low_match": 444,
+                "low_match": 450,
                 "location_scope": 0
             }
         },
         "freelance": {
             "label": "Freelance",
-            "collected": 39,
-            "accepted": 35,
+            "collected": 41,
+            "accepted": 37,
             "discarded": {
                 "invalid_url": 0,
                 "out_of_profile": 0,
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 1031,
-        "saved": 151831,
-        "new": 551
+        "filtered": 1121,
+        "saved": 152415,
+        "new": 584
     }
 }

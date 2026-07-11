@@ -1,6 +1,6 @@
 {
-    "generated_at": "2026-07-11 15:55:34",
-    "session_label": "Ciclo Meio-dia (12h)",
+    "generated_at": "2026-07-11 16:44:15",
+    "session_label": "Ciclo Tarde (13h)",
     "linkedin_credentials_configured": true,
     "sources": {
         "remotive": {
@@ -29,13 +29,13 @@
         },
         "linkedin": {
             "label": "LinkedIn",
-            "collected": 1058,
-            "accepted": 459,
+            "collected": 1099,
+            "accepted": 518,
             "discarded": {
                 "invalid_url": 0,
-                "out_of_profile": 203,
+                "out_of_profile": 227,
                 "language_requirement": 0,
-                "low_match": 396,
+                "low_match": 354,
                 "location_scope": 0
             }
         },
@@ -101,8 +101,8 @@
         }
     },
     "totals": {
-        "filtered": 1000,
-        "saved": 158571,
-        "new": 451
+        "filtered": 1059,
+        "saved": 158976,
+        "new": 405
     }
 }
